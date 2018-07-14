@@ -11,19 +11,19 @@
 #include <signal.h>
 #include <sys/wait.h>
 
-int totaldonnees=0;
+int totaldonnees = 0;
 
 void str_echo(int);
 
-int main(int argc,char **argv)
+int main(int argc, char **argv)
 {
     int lfd,cfd;
     pid_t childpid;
-    socklen_t	clilen;
+    socklen_t clilen;
     struct sockaddr_in cliaddr,servaddr;
     struct sigaction act;
 
-    if (argc!=2)
+    if (argc != 2)
     {
         printf("Usage : serveur Port\n");
         exit(-1);
@@ -31,9 +31,9 @@ int main(int argc,char **argv)
 
     act.sa_handler=SIG_DFL;
     act.sa_flags=SA_NOCLDWAIT;
-    sigaction(SIGCHLD,&act,NULL);
+    sigaction(SIGCHLD, &act, NULL);
 
-    lfd=socket(AF_INET,SOCK_STREAM,0);
+    lfd = socket(AF_INET, SOCK_STREAM, 0);
 
     bzero(&servaddr,sizeof(servaddr));
 

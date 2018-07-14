@@ -1,5 +1,5 @@
 server: 
-	clang server.c -o bin/server
+	clang server.c -o bin/server -g
 
 client:
-	clang client.c -o bin/client
+	clang client.c -o bin/client -g
