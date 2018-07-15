@@ -14,13 +14,15 @@
 #define	max(a,b)	((a) > (b) ? (a) : (b))
 #define MAXCHAR	256
 
+char absolutPath[1024];
+
 void str_cli(int, int);
+void executeCommande(char[]);
 
 int main(int argc, char **argv)
 {
-	int	clientSocket;
+	int	clientSocket, fd;
 	struct sockaddr_in serverAdresse;
-	int fd;
 
 	if (argc != 3)
 	{
@@ -38,12 +40,6 @@ int main(int argc, char **argv)
 	
 	connect(clientSocket, (struct sockaddr*) &serverAdresse, sizeof(serverAdresse));
 
-	/**if(send(clientSocket, saisieUtilisateur, strlen(saisieUtilisateur), 0) < 0)
-	{
-		perror("send()");
-		exit(-1);
-	}**/
-
 	fd = open("monTerminal.txt", O_RDONLY);
 	if (fd < 0)
 	{
@@ -58,10 +54,10 @@ int main(int argc, char **argv)
 
 void str_cli(int fd, int clientSocket)
 {
-	int maxfdp1, stdineof = 0;
+	int maxfdp1, stdineof = 0, n = 0;
 	fd_set rset;
-	char sendline[MAXCHAR], recvline[MAXCHAR];
-	int n;
+	char sendline[MAXCHAR], recvline[MAXCHAR], folderfile[MAXCHAR], concatenation[MAXCHAR];
+	getcwd(absolutPath, sizeof(absolutPath));
 
 	FD_ZERO(&rset);
 	for ( ; ; )
@@ -96,38 +92,59 @@ void str_cli(int fd, int clientSocket)
 			}
 			
 			recvline[n] = '\0';
-			
 			if(strcmp(recvline, "Disconnect") == 0){
-				printf("Vous allez etre deconnecte. Aurevoir.");
+				printf("Vous allez etre deconnecte. Bye.\n");
+				sleep(3);
 				shutdown(clientSocket, SHUT_WR);
 				continue;
+			}else if(strcmp(recvline, "ls") == 0 || strcmp(recvline, "pwd") == 0){
+				executeCommande(recvline);
+				strcpy(recvline, "\n>");
+			}else if(strcmp(recvline, "cd") == 0){
+				printf("Se déplacer dans quel repertoire ?\n>");
+				scanf ("%s", folderfile);
+				strcat(absolutPath, "/");
+				strcpy(recvline, strcat(absolutPath, folderfile));
+				chdir(recvline);
+				printf("Vous avez ete deplace dans le repertoire %s.\n", folderfile);
+				strcpy(recvline, "\n>");
+			}else if(strcmp(recvline, "rm") == 0){
+				printf("Supprimer quel fichier ?\n>");
+				scanf ("%s", folderfile);
+				strcpy(concatenation, "rm ");
+				strcpy(recvline, strcat(concatenation, folderfile));
+				executeCommande(recvline);
+				printf("Le fichier %s a ete supprime.\n", folderfile);
+				strcpy(recvline, "\n>");
 			}
-			if(strcmp(recvline, "Retry") == 0){
-				printf("Veuillez reessayer svp.");
-				
-			}
-			write(fd, recvline, n);
+			write(fd, recvline, strlen(recvline));
 		}
 
-		if (FD_ISSET(fd, &rset))
-		{
+		if (FD_ISSET(fd, &rset)) {
 			n = read(fd, sendline, MAXCHAR);
-			if (n == 0)
-			{
+			if (n == 0) {
 				shutdown(clientSocket, SHUT_WR);
 				FD_CLR(fd, &rset);
 				continue;
-			}else if (n < 0)
-			{
+			}else if (n < 0) {
 				printf("Erreur de fichier (socket)\n");
 				exit(-1);
 			}
 
 			sendline[n] = '\0';
-			//printf("je passe ici\n");
-			//printf("=[%s]\n", sendline);
 			write(clientSocket, sendline, n);
-			//sleep(3);
 		}
 	}
+}
+
+void executeCommande(char command[])
+{
+	char tampon[MAXCHAR];
+	FILE *sortie;
+	sortie = popen (command, "r");
+	if (sortie == NULL) fprintf (stderr, "erreur");
+	while (fgets (tampon, sizeof tampon, sortie) != NULL) {
+		fputs (tampon, stdout);
+	}
+	fclose (sortie);	
 }
