@@ -29,7 +29,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/client",
-            "args": ["127.0.0.1", "8888", "liste.txt"],
+            "args": ["127.0.0.1", "8888"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
