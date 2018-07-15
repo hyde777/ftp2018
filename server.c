@@ -121,15 +121,15 @@ void  str_echo(int sockfd)
             else {
                 strcpy(password, buf);
                 printf("password : %s\n", buf);
-                bPassword = checkUsername(password);
+                bPassword = checkPassword(password);
                 if(bPassword == 0) {
-                    if(retry == 3) strcpy(buf, "Disconnect"); 
-                    strcpy(buf, "Retry\n");
-                    retry = retry + 1;
+                    if(retry >= 2){
+                        strcpy(buf, "Disconnect"); 
+                    }else{
+                        strcpy(buf, "Retry\n");
+                        retry = retry + 1;
+                    }
                 }
-                /*else
-                    strcpy(buf, "PasswordFound");*/
-
             }
 
             if(bUsername == 1 && bPassword == 2){
@@ -151,15 +151,12 @@ int checkUsername(char str[])
     fichier = fopen("informations.csv", "r");
  
     if (fichier != NULL)
-    {int n;
-        while ((n = fscanf(fichier, "%s %s\n", name, pwd)) != 0)
+    {
+        while (fscanf(fichier, "%s %s\n", name, pwd) > 0)
         {
-            printf("%d", n);
-            
             printf("username : %s %s\n", name, pwd);
 
             if(strcmp(name, str) == 0) return 1;
-            if(strcmp(pwd, str) == 0) return 2;
         }
         fclose(fichier);
     }
@@ -175,9 +172,10 @@ int checkPassword(char str[])
  
     if (fichier != NULL)
     {
-        while (fgets(name, 81, fichier) != NULL)
+        while (fscanf(fichier, "%s %s\n", name, pwd) > 0)
         {
-            fscanf(fichier, "%s;%s", name, pwd);
+            printf("username : %s %s\n", name, pwd);
+            if(strcmp(pwd, str) == 0) return 2;
         }
         fclose(fichier);
     }
