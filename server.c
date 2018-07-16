@@ -21,6 +21,8 @@ void str_echo(int);
 char* executeCommande(char[]);
 int checkUsername(char[]);
 int checkPassword(char[]);
+int createFileWithData(char[], char[]);
+char* getDataInFile(char[]);
 
 int main(int argc, char **argv)
 {
@@ -52,7 +54,7 @@ int main(int argc, char **argv)
     perror("bind");
 
     listen(serverSocket, 10);
-
+    getcwd(absolutPath, sizeof(absolutPath));
     for( ; ; )
     {
         
@@ -98,14 +100,30 @@ void  str_echo(int sockfd)
         }else if(strcmp(buf, "rpwd") == 0){
             strcpy(buf, executeCommande("pwd"));
 		}else if(strcmp(buf, "rcd") == 0){
-			/*printf("Se déplacer dans quel repertoire ?\n>");
+			printf("Se déplacer dans quel repertoire ?\n>");
 			scanf ("%s", folderfile);
-			strcpy(concatenation, "cd ");
-			strcpy(buf, strcat(concatenation, folderfile));
-            strcpy(buf, executeCommande(buf));*/
-            chdir("/home/loghan/Documents/projetC/clientserver/Client/azerty");
+			strcat(absolutPath, "/");
+			strcpy(buf, strcat(absolutPath, folderfile));
+			chdir(buf);
 			printf("Vous avez ete deplace dans le repertoire %s.\n", folderfile);
-		}
+		}else if(strcmp(buf, "upld") == 0){ //get le path du client
+            char pathFile[MAXCHAR], data[MAXCHAR*4];
+            printf("Upload quel fichier ?\n>");
+			scanf ("%s", folderfile);
+            strcat(pathFile, absolutPath);
+            strcat(pathFile, folderfile);
+            strcpy(data, getDataInFile(pathFile));
+            createFileWithData(pathFile, data);
+        }else if(strcmp(buf, "downl") == 0){ //get le path du client
+            char pathFile[MAXCHAR], data[MAXCHAR*4];
+            printf("Download quel fichier ?\n>");
+			scanf ("%s", folderfile);
+            strcat(pathFile, absolutPath);
+            strcat(pathFile, folderfile);
+            strcpy(data, getDataInFile(pathFile));
+            createFileWithData(pathFile, data);
+        }
+
         
         if(isBonjour == 1){
             if(strlen(username) == 0) {
@@ -188,10 +206,23 @@ char* executeCommande(char command[])
 	if (sortie == NULL) fprintf (stderr, "erreur");
 	while (fgets (tampon, sizeof tampon, sortie) != NULL)
     {
-		//fputs (tampon, stdout);
         strcat(result, tampon);
 	}
 	fclose (sortie);
     printf("=> %s", result);
     return result;
+}
+
+int createFileWithData(char strFile[], char strData[])
+{
+	char tampon[MAXCHAR];
+	FILE *file;
+	file = popen (strFile, "r+");
+	if (file == NULL) return 1;
+    fputs (strData, file);
+	fclose (file);
+    return 0;
+}
+char* getDataInFile(char data[]){
+
 }
