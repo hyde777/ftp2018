@@ -34,7 +34,7 @@ int main(int argc, char **argv)
 
     if (argc != 2)
     {
-        printf("<serveur Port>\n");
+        printf("Missing param : <serveur_port>\n");
         exit(-1);
     }
 
@@ -55,20 +55,20 @@ int main(int argc, char **argv)
 
     listen(serverSocket, 10);
     getcwd(absolutPath, sizeof(absolutPath));
-    for( ; ; )
+    for ( ; ; )
     {
         
         lenClientAdresse = sizeof(clientAdresse);
 
         codefd = accept(serverSocket, (struct sockaddr*) &clientAdresse, &lenClientAdresse);
-        if(codefd < 0)
+        if (codefd < 0)
         {
             printf("erreur accept\n");
             exit(-1);
         }
 
         childPID = fork();
-        if(childPID == 0)
+        if (childPID == 0)
         {
             close(serverSocket);
             str_echo(codefd);
@@ -84,29 +84,37 @@ void  str_echo(int sockfd)
 	ssize_t n;
 	char buf[MAXCHAR], folderfile[MAXCHAR], concatenation[MAXCHAR];
 
-	while((n = read(sockfd, buf, MAXCHAR)) > 0)
+	while ((n = read(sockfd, buf, MAXCHAR)) > 0)
 	{
 		totalDonnees += n;
 
         buf[n - 1] = '\0';
-        if(strcmp(buf, "Bonjour") == 0 || strcmp(buf, "BONJ") == 0)
+        if (strcmp(buf, "bonjour") == 0 || strcmp(buf, "BONJ") == 0)
         {
             strcpy(buf, "Qui etes vous ?\n>");
             isBonjour = 1;
             write(sockfd, buf, strlen(buf));
             continue;
-        }else if(strcmp(buf, "rls") == 0){
+        }
+        else if (strcmp(buf, "rls") == 0)
+        {
             strcpy(buf, executeCommande("ls"));
-        }else if(strcmp(buf, "rpwd") == 0){
+        }
+        else if (strcmp(buf, "rpwd") == 0)
+        {
             strcpy(buf, executeCommande("pwd"));
-		}else if(strcmp(buf, "rcd") == 0){
+		}
+        else if (strcmp(buf, "rcd") == 0)
+        {
 			printf("Se déplacer dans quel repertoire ?\n>");
 			scanf ("%s", folderfile);
 			strcat(absolutPath, "/");
 			strcpy(buf, strcat(absolutPath, folderfile));
 			chdir(buf);
 			printf("Vous avez ete deplace dans le repertoire %s.\n", folderfile);
-		}else if(strcmp(buf, "upld") == 0){ //get le path du client
+		}
+        else if (strcmp(buf, "upld") == 0) //todo get le path du client
+        {
             char pathFile[MAXCHAR], data[MAXCHAR*4];
             printf("Upload quel fichier ?\n>");
 			scanf ("%s", folderfile);
@@ -114,7 +122,9 @@ void  str_echo(int sockfd)
             strcat(pathFile, folderfile);
             strcpy(data, getDataInFile(pathFile));
             createFileWithData(pathFile, data);
-        }else if(strcmp(buf, "downl") == 0){ //get le path du client
+        }
+        else if (strcmp(buf, "downl") == 0) //todo get le path du client
+        {
             char pathFile[MAXCHAR], data[MAXCHAR*4];
             printf("Download quel fichier ?\n>");
 			scanf ("%s", folderfile);
@@ -124,31 +134,35 @@ void  str_echo(int sockfd)
             createFileWithData(pathFile, data);
         }
 
-        
-        if(isBonjour == 1){
-            if(strlen(username) == 0) {
+        if (isBonjour == 1)
+        {
+            if (strlen(username) == 0)
+            {
                 strcpy(username, buf);
                 isUsername = checkUsername(username);
                 if(isUsername == 0) 
                     strcpy(buf, "Disconnect");
                 else
                     strcpy(buf, "Ton mot de passe ?\n>");
-
             }
-            else {
+            else
+            {
                 strcpy(password, buf);
                 isPassword = checkPassword(password);
-                if(isPassword == 0) {
-                    if(retry >= 2){
-                        strcpy(buf, "Disconnect"); 
-                    }else{
+                if (isPassword == 0)
+                {
+                    if (retry >= 2)
+                        strcpy(buf, "Disconnect");
+                    else
+                    {
                         strcpy(buf, "Mot de passe incorrect, reessayer.\n>");
                         retry = retry + 1;
                     }
                 }
             }
 
-            if(isUsername == 1 && isPassword == 1){
+            if (isUsername == 1 && isPassword == 1)
+            {
                 isBonjour = 0;
                 strcpy(buf, "Welcome !\n>");
             }
@@ -190,7 +204,7 @@ int checkPassword(char str[])
         while (fscanf(fichier, "%s %s\n", name, pwd) > 0)
         {
             printf("username : %s %s\n", name, pwd);
-            if(strcmp(pwd, str) == 0) return 1;
+            if (strcmp(pwd, str) == 0) return 1;
         }
         fclose(fichier);
     }
@@ -223,6 +237,18 @@ int createFileWithData(char strFile[], char strData[])
 	fclose (file);
     return 0;
 }
-char* getDataInFile(char data[]){
 
+char* getDataInFile(char strFile[])
+{
+    char* result = malloc(sizeof(char) * 1024);
+    char tampon[MAXCHAR];
+	FILE *file;
+	file = popen (strFile, "r");
+	if (file == NULL) fprintf (stderr, "erreur");
+	while (fgets (tampon, sizeof tampon, file) != NULL)
+    {
+        strcat(result, tampon);
+	}
+	fclose (file);
+    return result;
 }

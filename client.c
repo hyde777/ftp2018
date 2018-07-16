@@ -15,6 +15,7 @@
 #define MAXCHAR	256
 
 char absolutPath[1024];
+int PORT;
 
 void str_cli(int, int);
 void executeCommande(char[]);
@@ -26,19 +27,25 @@ int main(int argc, char **argv)
 
 	if (argc != 3)
 	{
-		printf("usage: client <IPaddress> <Port>\n");
+		printf("Missing params : <ip_address> <port>\n");
 		exit(-1);
 	}
 
 	clientSocket = socket(AF_INET, SOCK_STREAM, 0);
 	
 	bzero(&serverAdresse, sizeof(serverAdresse));
-
+	PORT = htons(atoi(argv[2]));
 	serverAdresse.sin_family = AF_INET;
-	serverAdresse.sin_port = htons(atoi(argv[2]));
+	serverAdresse.sin_port = PORT;
 	inet_pton(AF_INET, argv[1], &serverAdresse.sin_addr);
 	
-	connect(clientSocket, (struct sockaddr*) &serverAdresse, sizeof(serverAdresse));
+	if (connect(clientSocket, (struct sockaddr*) &serverAdresse, sizeof(serverAdresse)))
+	{
+	    printf("ERROR: Failed to connect to the host!\n");
+		exit(-1);
+	}
+	else 
+		printf("Connected to server at port %d...ok!\n", PORT);
 
 	fd = open("monTerminal.txt", O_RDONLY);
 	if (fd < 0)
@@ -92,15 +99,20 @@ void str_cli(int fd, int clientSocket)
 			}
 			
 			recvline[n] = '\0';
-			if(strcmp(recvline, "Disconnect") == 0){
+			if (strcmp(recvline, "Disconnect") == 0)
+			{
 				printf("Vous allez etre deconnecte. Bye.\n");
 				sleep(3);
 				shutdown(clientSocket, SHUT_WR);
 				continue;
-			}else if(strcmp(recvline, "ls") == 0 || strcmp(recvline, "pwd") == 0){
+			} 
+			else if (strcmp(recvline, "ls") == 0 || strcmp(recvline, "pwd") == 0)
+			{
 				executeCommande(recvline);
 				strcpy(recvline, "\n>");
-			}else if(strcmp(recvline, "cd") == 0){
+			} 
+			else if (strcmp(recvline, "cd") == 0)
+			{
 				printf("Se déplacer dans quel repertoire ?\n>");
 				scanf ("%s", folderfile);
 				strcat(absolutPath, "/");
@@ -108,7 +120,9 @@ void str_cli(int fd, int clientSocket)
 				chdir(recvline);
 				printf("Vous avez ete deplace dans le repertoire %s.\n", folderfile);
 				strcpy(recvline, "\n>");
-			}else if(strcmp(recvline, "rm") == 0){
+			} 
+			else if (strcmp(recvline, "rm") == 0)
+			{
 				printf("Supprimer quel fichier ?\n>");
 				scanf ("%s", folderfile);
 				strcpy(concatenation, "rm ");
@@ -120,17 +134,20 @@ void str_cli(int fd, int clientSocket)
 			write(fd, recvline, strlen(recvline));
 		}
 
-		if (FD_ISSET(fd, &rset)) {
+		if (FD_ISSET(fd, &rset)) 
+		{
 			n = read(fd, sendline, MAXCHAR);
-			if (n == 0) {
+			if (n == 0) 
+			{
 				shutdown(clientSocket, SHUT_WR);
 				FD_CLR(fd, &rset);
 				continue;
-			}else if (n < 0) {
+			} 
+			else if (n < 0) 
+			{
 				printf("Erreur de fichier (socket)\n");
 				exit(-1);
 			}
-
 			sendline[n] = '\0';
 			write(clientSocket, sendline, n);
 		}
@@ -143,8 +160,9 @@ void executeCommande(char command[])
 	FILE *sortie;
 	sortie = popen (command, "r");
 	if (sortie == NULL) fprintf (stderr, "erreur");
-	while (fgets (tampon, sizeof tampon, sortie) != NULL) {
+	while (fgets (tampon, sizeof tampon, sortie) != NULL) 
+	{
 		fputs (tampon, stdout);
 	}
-	fclose (sortie);	
+	fclose (sortie);
 }
